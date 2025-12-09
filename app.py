@@ -1,55 +1,64 @@
-# house_price_logistic.py
-
+# app.py
+import streamlit as st
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
-# Step 1: Load Dataset
-data = pd.read_csv('/kaggle/input/house-price-prediction-dataset/House Price Prediction Dataset.csv')
+st.set_page_config(page_title="House Price Classification App", layout="wide")
+st.title("House Price Classification using Logistic Regression")
 
-# Step 2: Handle Missing Values
-data = data.dropna()
+# Step 1: Load preprocessed data
+@st.cache_data
+def load_data():
+    data = pd.read_pickle('house_price_processed.pkl')
+    return data
 
-# Step 3: Convert Price into Binary Target (1 if Price > median else 0)
-median_price = data['Price'].median()
-data['Target'] = (data['Price'] > median_price).astype(int)
+data = load_data()
 
-# Step 4: Separate Features and Target
-X = data.drop(['Price', 'Target'], axis=1)
+st.subheader("Dataset Preview")
+st.dataframe(data.head())
+
+# Step 2: Separate features and target
+X = data.drop('Target', axis=1)
 y = data['Target']
 
-# Step 5: Encode Categorical Variables
-for col in X.select_dtypes(include=['object']).columns:
-    le = LabelEncoder()
-    X[col] = le.fit_transform(X[col])
-
-# Step 6: Split Dataset
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-
-# Step 7: Scale Features
+# Step 3: Scale features
 scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+X_scaled = scaler.fit_transform(X)
 
-# Step 8: Train Logistic Regression Model
+# Step 4: Split into train/test (for demo purposes, we use all data here)
+X_train, X_test, y_train, y_test = X_scaled, X_scaled, y, y  # Using full data
+
+# Step 5: Train Logistic Regression
 model = LogisticRegression(max_iter=1000, random_state=42)
 model.fit(X_train, y_train)
 
-# Step 9: Make Predictions
+# Step 6: Make predictions
 y_pred = model.predict(X_test)
 
-# Step 10: Evaluate Model
+# Step 7: Evaluation
+st.subheader("Model Evaluation")
 accuracy = accuracy_score(y_test, y_pred)
 conf_matrix = confusion_matrix(y_test, y_pred)
-class_report = classification_report(y_test, y_pred)
+class_report = classification_report(y_test, y_pred, output_dict=True)
 
-print(f"Accuracy: {accuracy:.4f}")
-print("Confusion Matrix:")
-print(conf_matrix)
-print("Classification Report:")
-print(class_report)
+st.write(f"**Accuracy:** {accuracy:.4f}")
+st.write("**Confusion Matrix:**")
+st.write(conf_matrix)
 
+st.write("**Classification Report:**")
+st.dataframe(pd.DataFrame(class_report).transpose())
+
+# Step 8: Predict on new input
+st.subheader("Predict for New House Data")
+input_dict = {}
+for col in X.columns:
+    input_dict[col] = st.number_input(f"{col}", value=float(data[col].median()))
+
+if st.button("Predict"):
+    input_df = pd.DataFrame([input_dict])
+    input_scaled = scaler.transform(input_df)
+    prediction = model.predict(input_scaled)[0]
+    result = "Price > Median" if prediction == 1 else "Price <= Median"
+    st.success(f"The predicted class for the house is: **{result}**")

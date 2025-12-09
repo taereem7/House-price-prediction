@@ -4,10 +4,10 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 
-st.set_page_config(page_title="House Price Classification App", layout="wide")
+st.set_page_config(page_title="House Price Classification", layout="wide")
 st.title("House Price Classification using Logistic Regression")
 
-# Step 1: Load preprocessed data and create binary target
+# Load preprocessed data and create binary target
 @st.cache_data
 def load_data():
     data = pd.read_pickle('house_price_processed.pkl')
@@ -17,24 +17,29 @@ def load_data():
 
 data = load_data()
 
-# Step 2: Separate features and target
-X = data.drop('Target', axis=1)
+# Select only important features to simplify UI
+important_features = ['Area', 'Bedrooms', 'Bathrooms', 'Stories', 'Parking']  # example important columns
+X = data[important_features]
 y = data['Target']
 
-# Step 3: Scale features
+# Scale features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Step 4: Train Logistic Regression on full data
+# Train Logistic Regression on full data
 model = LogisticRegression(max_iter=1000, random_state=42)
 model.fit(X_scaled, y)
 
-# Step 5: Predict on new input
-st.subheader("Predict for New House Data")
-input_dict = {}
-for col in X.columns:
-    input_dict[col] = st.number_input(f"{col}", value=float(data[col].median()))
+# User input section
+st.subheader("Enter House Details")
 
+cols = st.columns(len(important_features))
+input_dict = {}
+for i, col_name in enumerate(important_features):
+    median_val = float(data[col_name].median())
+    input_dict[col_name] = cols[i].number_input(col_name, value=median_val)
+
+# Prediction button
 if st.button("Predict"):
     input_df = pd.DataFrame([input_dict])
     input_scaled = scaler.transform(input_df)

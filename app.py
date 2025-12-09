@@ -8,10 +8,12 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 st.set_page_config(page_title="House Price Classification App", layout="wide")
 st.title("House Price Classification using Logistic Regression")
 
-# Step 1: Load preprocessed data
+# Step 1: Load preprocessed data and create binary target
 @st.cache_data
 def load_data():
     data = pd.read_pickle('house_price_processed.pkl')
+    median_price = data['Price'].median()
+    data['Target'] = (data['Price'] > median_price).astype(int)
     return data
 
 data = load_data()
@@ -27,8 +29,8 @@ y = data['Target']
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Step 4: Split into train/test (for demo purposes, we use all data here)
-X_train, X_test, y_train, y_test = X_scaled, X_scaled, y, y  # Using full data
+# Step 4: Split into train/test (for demo purposes, using all data)
+X_train, X_test, y_train, y_test = X_scaled, X_scaled, y, y
 
 # Step 5: Train Logistic Regression
 model = LogisticRegression(max_iter=1000, random_state=42)
@@ -46,7 +48,6 @@ class_report = classification_report(y_test, y_pred, output_dict=True)
 st.write(f"**Accuracy:** {accuracy:.4f}")
 st.write("**Confusion Matrix:**")
 st.write(conf_matrix)
-
 st.write("**Classification Report:**")
 st.dataframe(pd.DataFrame(class_report).transpose())
 

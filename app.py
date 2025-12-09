@@ -17,11 +17,12 @@ def load_data():
 
 data = load_data()
 
-# Dynamically select top 5 numeric features for user input
+# Dynamically select top 5 numeric features, excluding ID and target columns
 numeric_cols = data.select_dtypes(include=['int64', 'float64']).columns.tolist()
-numeric_cols.remove('Price')  # remove original target if present
-numeric_cols.remove('Target') # remove binary target
-important_features = numeric_cols[:5]  # pick first 5 numeric columns
+for col in ['Price', 'Target', 'Id', 'ID']:  # exclude target and ID columns
+    if col in numeric_cols:
+        numeric_cols.remove(col)
+important_features = numeric_cols[:5]  # pick first 5 numeric features
 
 X = data[important_features]
 y = data['Target']

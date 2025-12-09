@@ -17,8 +17,12 @@ def load_data():
 
 data = load_data()
 
-# Select only important features to simplify UI
-important_features = ['Area', 'Bedrooms', 'Bathrooms', 'Stories', 'Parking']  # example important columns
+# Dynamically select top 5 numeric features for user input
+numeric_cols = data.select_dtypes(include=['int64', 'float64']).columns.tolist()
+numeric_cols.remove('Price')  # remove original target if present
+numeric_cols.remove('Target') # remove binary target
+important_features = numeric_cols[:5]  # pick first 5 numeric columns
+
 X = data[important_features]
 y = data['Target']
 
@@ -32,7 +36,6 @@ model.fit(X_scaled, y)
 
 # User input section
 st.subheader("Enter House Details")
-
 cols = st.columns(len(important_features))
 input_dict = {}
 for i, col_name in enumerate(important_features):

@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 st.set_page_config(page_title="House Price Classification App", layout="wide")
 st.title("House Price Classification using Logistic Regression")
@@ -18,9 +17,6 @@ def load_data():
 
 data = load_data()
 
-st.subheader("Dataset Preview")
-st.dataframe(data.head())
-
 # Step 2: Separate features and target
 X = data.drop('Target', axis=1)
 y = data['Target']
@@ -29,29 +25,11 @@ y = data['Target']
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Step 4: Split into train/test (for demo purposes, using all data)
-X_train, X_test, y_train, y_test = X_scaled, X_scaled, y, y
-
-# Step 5: Train Logistic Regression
+# Step 4: Train Logistic Regression on full data
 model = LogisticRegression(max_iter=1000, random_state=42)
-model.fit(X_train, y_train)
+model.fit(X_scaled, y)
 
-# Step 6: Make predictions
-y_pred = model.predict(X_test)
-
-# Step 7: Evaluation
-st.subheader("Model Evaluation")
-accuracy = accuracy_score(y_test, y_pred)
-conf_matrix = confusion_matrix(y_test, y_pred)
-class_report = classification_report(y_test, y_pred, output_dict=True)
-
-st.write(f"**Accuracy:** {accuracy:.4f}")
-st.write("**Confusion Matrix:**")
-st.write(conf_matrix)
-st.write("**Classification Report:**")
-st.dataframe(pd.DataFrame(class_report).transpose())
-
-# Step 8: Predict on new input
+# Step 5: Predict on new input
 st.subheader("Predict for New House Data")
 input_dict = {}
 for col in X.columns:
